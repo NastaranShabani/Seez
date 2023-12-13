@@ -5,9 +5,13 @@ import { authentication, random } from "../helper";
 export const register = async (req:express.Request, res:express.Response) => {
   try {
     const { username, email, password, superuser } = req.body;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !password || !username || superuser === undefined || typeof superuser !== 'boolean') {
-      res.status(400).send("All input is required");
+       return res.status(400).send("All input is required");
     }
+  if(!emailRegex.test(email)) {
+    return res.status(409).send("Email is not in correct format");
+  }
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
       return res.status(409).send("User Already Exist. Please Login");
@@ -16,11 +20,11 @@ export const register = async (req:express.Request, res:express.Response) => {
      const user = await createUser({
       username,
       email: email.toLowerCase(),
-      superuser,
+      superuser: req.body.superuser || false,
       salt,
       password: authentication(salt,password),
     });
-    res.status(201).json(user).end();
+    return res.status(201).json(user).end();
 } catch (err) {
 console.log(err);
 return res.sendStatus(400);
@@ -33,7 +37,7 @@ export const login = async (req:express.Request, res:express.Response) => {
     if(!email || !password) {
         return res.sendStatus(400);
     }
-    const user = await getUserByEmail(email).select("+salt +password");
+    const user = await getUserByEmail(email.toLowerCase()).select("+salt +password");
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }

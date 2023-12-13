@@ -24,10 +24,12 @@ export const getCars = () => Car.aggregate([
   {
     $match: {
       $or: [
-        { bookings: { $exists: true } },
+        { bookings: { $size: 0 } },
         {
-          'bookings.status': false,
-          'bookings.endDate': { $lt: new Date().toISOString()},
+          'bookings.status': {$eq: false},
+        },
+        {
+          'bookings.endDate': { $gt: new Date().toISOString()},
         },
       ],
     },
@@ -49,14 +51,14 @@ export const seachCarByModel = (value:string) => Car.aggregate(
     },
     {
       $match: {
-        $and: [
-          { bookings: {
-            $not: {
-              $elemMatch: {
-                status:true,
-                endDate: { lte: new Date()}
-              }}
-           } },
+        $or: [
+          { bookings: { $size: 0 } },
+          {
+            'bookings.status': {$eq: false},
+          },
+          {
+            'bookings.endDate': { $gt: new Date().toISOString()},
+          },
         ],
       },
     },
